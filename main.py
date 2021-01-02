@@ -1,2 +1,2 @@
 from provenance import ProvenancePanel
-provenancePanel = ProvenancePanel(True, 5, True)
+provenancePanel = ProvenancePanel(True, 60, True)

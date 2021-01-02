@@ -4,7 +4,6 @@ from datetime import datetime
 import sched, time
 
 class ProvenancePanel:
-    # Recuperando último registro no ElasticSearch
     def __init__(self, runAll=False, runningInterval=None, msg=False):
         print("Welcome to Provenance Panel!\n")
 
@@ -77,9 +76,6 @@ class ProvenancePanel:
             res = es.search(index=index_name, body=query)
             return int(res['hits']['hits'][0]['_id']) #last_id_elasticsearch
 
-            # print("%d documents found" % res['hits']['total'])
-            # for doc in res['hits']['hits']:
-            #     print("%s) %s" % (doc['_id'], doc['_source']['content']))
         else:
             #print("Index não existe!")
             return 0
@@ -89,21 +85,17 @@ class ProvenancePanel:
         last_id_elasticsearch = self.last_id_elasticsearch
         index_name = self.index_name
 
-        # set up a connection. arguments below are the defaults
         if msg: print("---------- Connecting to MonetDB ----------")
-        connection = pymonetdb.connect(username="monetdb", password="monetdb", hostname="localhost", database="dataflow_analyzer")
+        connection = pymonetdb.connect(username="monetdb_dfa", password="monetdb", hostname="localhost", database="dataflow_analyzer")
 
-        #create a cursor
         cursor = connection.cursor()
         cursor.arraysize = 100
 
         if msg: print("Connection OK.\n")
 
         if msg: print("---------- MonetDB - Checking new records ----------")
-        # execute a query (return the number of rows to fetch)
         rows = cursor.execute('SELECT id, trainingmodel_task_id, adaptation_task_id, timestamp, elapsed_time, loss, accuracy, val_loss, val_accuracy, epoch ' +
                               'FROM ds_otrainingmodel where id>'+str(last_id_elasticsearch))
-        #rows = cursor.execute('SELECT id, trainingmodel_task_id, adaptation_task_id, timestamp, elapsed_time, loss, accuracy, val_loss, val_accuracy, epoch FROM ds_otrainingmodel where id>600')
         self.res = cursor.fetchall()
 
     def insert_new_records_elasticsearch(self, msg=False):
@@ -133,12 +125,10 @@ class ProvenancePanel:
                 record_for_elasticsearch = {"_id" : currentRowID, "doc": dictCurrentRow}
                 actions.append(record_for_elasticsearch)
 
-            #print (actions)
             response = helpers.bulk(self.es, actions, index=self.index_name)
             rows_inserted = self.last_id_monetdb - self.last_id_elasticsearch
             self.last_id_elasticsearch = self.last_id_monetdb
             if msg: print("Records inserted successfully!")
-            # return last_id_monetdb
         else:
             if msg: print("There's nothing to be added!")
 

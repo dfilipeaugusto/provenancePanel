@@ -94,8 +94,9 @@ class ProvenancePanel:
         if msg: print("Connection OK.\n")
 
         if msg: print("---------- MonetDB - Checking new records ----------")
-        rows = cursor.execute('SELECT id, trainingmodel_task_id, adaptation_task_id, timestamp, elapsed_time, loss, accuracy, val_loss, val_accuracy, epoch ' +
-                              'FROM ds_otrainingmodel where id>'+str(last_id_elasticsearch))
+        rows = cursor.execute('SELECT ds_otrainingmodel.id, ds_itrainingmodel.optimizer_name, ds_otrainingmodel.adaptation_task_id, ds_otrainingmodel.timestamp, ds_otrainingmodel.elapsed_time, ds_otrainingmodel.loss, ds_otrainingmodel.accuracy, ds_otrainingmodel.val_loss, ds_otrainingmodel.val_accuracy, ds_otrainingmodel.epoch ' +
+                              'FROM ds_otrainingmodel inner join ds_itrainingmodel on ds_otrainingmodel.trainingmodel_task_id = ds_itrainingmodel.trainingmodel_task_id ' +
+                              'where ds_otrainingmodel.id>'+str(last_id_elasticsearch))
         self.res = cursor.fetchall()
 
     def insert_new_records_elasticsearch(self, msg=False):
@@ -104,11 +105,11 @@ class ProvenancePanel:
             self.last_id_monetdb = self.res[-1][0]
 
             actions = []
-            header = ['id', 'trainingmodel_task_id', 'adaptation_task_id', 'timestamp', 'elapsed_time', 'loss', 'accuracy', 'val_loss', 'val_accuracy', 'epoch']
+            header = ['id', 'optimizer_name', 'adaptation_task_id', 'timestamp', 'elapsed_time', 'loss', 'accuracy', 'val_loss', 'val_accuracy', 'epoch']
 
             headerType = [
                 lambda id: int(id),
-                lambda trainingmodel_task_id: int(trainingmodel_task_id),
+                lambda optimizer_name: optimizer_name,
                 lambda adaptation_task_id: adaptation_task_id,
                 lambda timestamp: datetime.fromtimestamp(float(timestamp)),
                 lambda elapsed_time: float(elapsed_time),
